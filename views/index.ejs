@@ -1,0 +1,76 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+	<meta charset="UTF=8">
+	<title>Group Chat</title>
+	<style type="text/css">
+		.container{
+			padding-top: 50px;
+		}
+	</style>
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+	<!-- Optional theme -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+	<!-- Latest compiled and minified JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript">
+    $(document).ready(function(){
+    	var socket = io.connect();
+    	var current_user;
+
+    	var new_user = function(){
+    		var name = prompt("Please enter your username");
+    		socket.emit("page_load", {user: name});
+    	}
+
+    	new_user();
+
+    	socket.on("existing_user", function(data){
+    		$("#error").html(JSON.stringify(data.error))
+    		new_user();
+    	})
+
+    	socket.on("load_messages", function(data){
+    		$("#error").html("")
+    		current_user = data.current_user;
+    		var messages = data.messages;
+    		var messages_thread = "";
+
+    		for(var i=0; i<messages.length; i++){
+    			messages_thread += "<p>" + messages[i].name + ": " + messages[i].message + "</p>";
+    		}
+
+    		$("#message_board").append(messages_thread);
+    	})
+
+    	$("#new_message").submit(function(){
+    		socket.emit("new_message", {message: $("#message").val(), user: current_user})
+    		return false;
+    	})
+
+    	socket.on("post_new_message", function(data) {
+    		$("#message_board").append("<p>" + data.user + ": " + data.new_message + "</p>");
+    	})
+
+    })
+
+    </script>
+</head>
+<body>
+	<div class="container">
+		<div id="container">
+			<div id="error"></div>
+			<h2>Conversation Board</h2>
+			<div id="message_board"></div>
+			<form id="new_message">
+				<input type="text" id="message" placeholder="enter your message here">
+				<input type="submit" value="Send">
+			</form>
+		</div>
+	</div>
+</body>
+</html>
